@@ -29,7 +29,7 @@ myhostname = <%= node['postfix']['myhostname'] %>
 <% if node['postfix']['domain'] %>
 mydomain = <%= node['postfix']['mydomain'] %>
 <% end -%>
-myorigin = <%= node['postfix']['myorigin'] %>
+myorigin = <%= node['postfix']['myorigin'] ? node['postfix']['myorigin'] : '$myhostname' %>
 smtpd_banner = $myhostname ESMTP $mail_name
 alias_maps = hash:/etc/aliases
 alias_database = hash:/etc/aliases

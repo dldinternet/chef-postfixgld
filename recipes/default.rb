@@ -20,8 +20,8 @@ chef_gem "chef-rewind"
 require 'chef/rewind'
 
 
-include_recipe "mysql::server"
-include_recipe "database"
+# include_recipe "mysql::server"
+# include_recipe "database"
 
 package "postfix-gld"
 
@@ -37,12 +37,10 @@ mysql_connection_info = {:host => "localhost",
                          :password => node['mysql']['server_root_password']}
 
 # ADD the database / user / tables
-
 mysql_database node['postfixgld']['mysql']['db'] do
   connection mysql_connection_info
   action :create
 end
-
 
 mysql_database_user node['postfixgld']['mysql']['user'] do
   connection mysql_connection_info
@@ -63,13 +61,23 @@ end
 
 
 execute "mysql-install-gld.db" do
-  command "/usr/bin/mysql -u #{node['postfixgld']['mysql']['user']} -p\"#{node['postfixgld']['mysql']['password']}\" #{node['postfixgld']['mysql']['db']} < /usr/share/gld/tables.mysql "
+  command "/usr/bin/mysql -u #{node['postfixgld']['mysql']['user']} --password=\"#{node['postfixgld']['mysql']['password']}\" #{node['postfixgld']['mysql']['db']} < /usr/share/gld/tables.mysql "
   not_if do
     require 'mysql'
     m = Mysql.new("localhost", node['postfixgld']['mysql']['user'],
                   node['postfixgld']['mysql']['password'],
                   node['postfixgld']['mysql']['db'])
     m.list_tables.include?('greylist')
+    # require 'mysql2'
+    # m = Mysql2::Client.new(
+    #     host:          'localhost',
+    #     #socket:        3306,
+    #     username:      node['postfixgld']['mysql']['user'],
+    #     password:      node['postfixgld']['mysql']['password'],
+    #     port:          3306,
+    # #default_file:  new_resource.connection[:default_file],
+    # #default_group: new_resource.connection[:default_group]
+    #     )
   end
 end
 
@@ -85,7 +93,8 @@ end
 
 rewind "template[/etc/postfix/main.cf]" do
   cookbook "postfixgld"
-  source "postfix/main.cf.erb"
+  # noinspection RubyArgCount
+  source 'postfix/main.cf.erb'
   notifies :restart, "service[postfix]"
 end
 
